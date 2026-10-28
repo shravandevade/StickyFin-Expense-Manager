@@ -715,100 +715,27 @@ showHelpRestorePopup(BuildContext context) {
 }
 
 bool hidePremiumPopup() {
-  return premiumPopupEnabled == false ||
-      appStateSettings["purchaseID"] != null ||
-      appStateSettings["previewDemo"] == true;
+  return true;
 }
 
 Future<bool> premiumPopupPushRoute(BuildContext context) async {
-  if (hidePremiumPopup()) return true;
-  dynamic result = await pushRoute(
-    context,
-    PremiumPage(
-      popRouteWithPurchase: true,
-    ),
-  );
-  if (result == true) {
-    return true;
-  } else {
-    return false;
-  }
+  return true;
 }
 
 Future<bool> premiumPopupBudgets(BuildContext context) async {
-  if (hidePremiumPopup()) return true;
-  if ((await database.getAllBudgets()).length > 0) {
-    if (await premiumPopupPushRoute(context) == true) {
-      return true;
-    } else {
-      popRoute(context);
-      return false;
-    }
-  } else {
-    return true;
-  }
+  return true;
 }
 
 Future<bool> premiumPopupObjectives(BuildContext context,
     {required ObjectiveType objectiveType}) async {
-  if (hidePremiumPopup()) return true;
-  if ((await database.getAllObjectives(objectiveType: objectiveType)).length >
-      0) {
-    if (await premiumPopupPushRoute(context) == true) {
-      return true;
-    } else {
-      popRoute(context);
-      return false;
-    }
-  } else {
-    return true;
-  }
+  return true;
 }
 
 Future<bool> premiumPopupPastBudgets(BuildContext context) async {
-  if (hidePremiumPopup()) return true;
-  if (await premiumPopupPushRoute(context) == true) {
-    return true;
-  } else {
-    popRoute(context);
-    return false;
-  }
+  return true;
 }
 
 Future premiumPopupAddTransaction(BuildContext context) async {
-  if (hidePremiumPopup()) return true;
-
-  print("Checking premium before adding transaction - " +
-      appStateSettings["premiumPopupAddTransactionCount"].toString());
-
-  try {
-    DateTime.parse(appStateSettings["premiumPopupAddTransactionLastShown"]);
-  } catch (e) {
-    print("Error parsing date for premium popup, resetting...");
-    updateSettings(
-        "premiumPopupAddTransactionLastShown", DateTime.now().toString(),
-        updateGlobalState: false);
-  }
-
-  if (DateTime.parse(appStateSettings["premiumPopupAddTransactionLastShown"])
-          .add(Duration(days: 1))
-          .isBefore(DateTime.now()) &&
-      appStateSettings["premiumPopupAddTransactionCount"] > 5) {
-    updateSettings("premiumPopupAddTransactionCount", 0,
-        updateGlobalState: false);
-    updateSettings(
-        "premiumPopupAddTransactionLastShown", DateTime.now().toString(),
-        updateGlobalState: false);
-    await pushRoute(
-      context,
-      PremiumPage(
-        popRouteWithPurchase: true,
-        canDismiss: true,
-      ),
-    );
-  }
-
-  // Always return true, this is not an enforced feature
   return true;
 }
 

@@ -1,6 +1,9 @@
 import 'package:budget/colors.dart';
 import 'package:budget/database/tables.dart' hide AppSettings;
 import 'package:budget/pages/aboutPage.dart';
+import 'package:budget/pages/advancedStatisticsPage.dart';
+import 'package:budget/pages/periodComparisonPage.dart';
+import 'package:budget/pages/themeCustomizationPage.dart';
 import 'package:budget/pages/addTransactionPage.dart';
 import 'package:budget/pages/billSplitter.dart';
 import 'package:budget/pages/budgetsListPage.dart';
@@ -174,6 +177,42 @@ class MorePages extends StatelessWidget {
                 ),
               ],
             ),
+          Row(
+            children: [
+              Expanded(
+                child: SettingsContainerOpenPage(
+                  openPage: const AdvancedStatisticsPage(),
+                  title: "advanced-statistics".tr(),
+                  icon: appStateSettings["outlinedIcons"]
+                      ? Icons.analytics_outlined
+                      : Icons.analytics_rounded,
+                  description: appStateSettings["showExtraInfoText"] == false
+                      ? null
+                      : "advanced-analytics-description".tr(),
+                  isOutlined: true,
+                  isWideOutlined: true,
+                ),
+              ),
+            ],
+          ),
+          Row(
+            children: [
+              Expanded(
+                child: SettingsContainerOpenPage(
+                  openPage: const PeriodComparisonPage(),
+                  title: "financial-period-comparison".tr(),
+                  icon: appStateSettings["outlinedIcons"]
+                      ? Icons.compare_arrows_outlined
+                      : Icons.compare_arrows_rounded,
+                  description: appStateSettings["showExtraInfoText"] == false
+                      ? null
+                      : "compare-periods-description".tr(),
+                  isOutlined: true,
+                  isWideOutlined: true,
+                ),
+              ),
+            ],
+          ),
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -492,6 +531,14 @@ class SettingsPageContent extends StatelessWidget {
             );
           },
         ),
+        SettingsContainerOpenPage(
+          openPage: const ThemeCustomizationPage(),
+          title: "color-customization".tr(),
+          description: "color-customization-studio-description".tr(),
+          icon: appStateSettings["outlinedIcons"]
+              ? Icons.palette_outlined
+              : Icons.palette_rounded,
+        ),
         getPlatform() == PlatformOS.isIOS
             ? SizedBox.shrink()
             : SettingsContainerSwitch(
@@ -694,6 +741,7 @@ class MoreOptionsPagePreferences extends StatelessWidget {
         SettingsHeader(title: "style".tr()),
         HeaderHeightSetting(),
         OutlinedIconsSetting(),
+        const IconShapeSetting(),
         FontPickerSetting(),
         AppAnimationSetting(),
         CountingNumberAnimationSetting(),
@@ -968,6 +1016,39 @@ class OutlinedIconsSetting extends StatelessWidget {
       icon: appStateSettings["outlinedIcons"]
           ? Icons.star_outline
           : Icons.star_rounded,
+    );
+  }
+}
+
+class IconShapeSetting extends StatelessWidget {
+  const IconShapeSetting({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return SettingsContainerDropdown(
+      items: ["rounded", "circle", "squircle", "sharp"],
+      onChanged: (value) async {
+        await updateSettings("iconShape", value, updateGlobalState: true);
+        RestartApp.restartApp(context);
+      },
+      getLabel: (value) {
+        switch (value) {
+          case "circle":
+            return "Circle";
+          case "squircle":
+            return "Squircle";
+          case "sharp":
+            return "Square";
+          case "rounded":
+          default:
+            return "Rounded";
+        }
+      },
+      initial: appStateSettings["iconShape"] ?? "rounded",
+      title: "icon-shape".tr(),
+      icon: appStateSettings["outlinedIcons"]
+          ? Icons.category_outlined
+          : Icons.category_rounded,
     );
   }
 }

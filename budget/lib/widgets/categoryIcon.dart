@@ -56,6 +56,16 @@ class CategoryIcon extends StatelessWidget {
   final double emojiScale;
 
   Widget categoryIconWidget(context, TransactionCategory? category) {
+    double effectiveRadius = borderRadius;
+    final String shape = appStateSettings["iconShape"] ?? "rounded";
+    if (shape == "circle") {
+      effectiveRadius = (size + sizePadding) / 2;
+    } else if (shape == "squircle") {
+      effectiveRadius = (size + sizePadding) * 0.28;
+    } else if (shape == "sharp") {
+      effectiveRadius = 3.0;
+    }
+
     Widget child = Column(
       children: [
         Stack(
@@ -83,7 +93,7 @@ class CategoryIcon extends StatelessWidget {
                         width: 3,
                       ),
                       borderRadius: BorderRadiusDirectional.all(
-                          Radius.circular(borderRadius)),
+                          Radius.circular(effectiveRadius)),
                     )
                   : BoxDecoration(
                       border: Border.all(
@@ -91,7 +101,7 @@ class CategoryIcon extends StatelessWidget {
                         width: 0,
                       ),
                       borderRadius: BorderRadiusDirectional.all(
-                          Radius.circular(borderRadius)),
+                          Radius.circular(effectiveRadius)),
                     ),
               child: Tappable(
                 color: noBackground && category != null
@@ -128,7 +138,7 @@ class CategoryIcon extends StatelessWidget {
                             ),
                           );
                       },
-                borderRadius: borderRadius - 3,
+                borderRadius: max(0.0, effectiveRadius - 3),
                 child: Center(
                   child: (category?.emojiIconName == null &&
                           category != null &&

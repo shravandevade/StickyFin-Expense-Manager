@@ -7,6 +7,7 @@ import 'package:budget/widgets/openBottomSheet.dart';
 import 'package:budget/widgets/ratingPopup.dart';
 import 'package:budget/widgets/tappable.dart';
 import 'package:budget/struct/iconObjects.dart';
+import 'package:budget/widgets/iconPackPicker.dart';
 import 'package:budget/widgets/textInput.dart';
 import 'package:budget/widgets/textWidgets.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -140,7 +141,7 @@ class _SelectCategoryImageState extends State<SelectCategoryImage> {
                       ),
                       // ),
                     ),
-                    SizedBox(width: 10),
+                    const SizedBox(width: 8),
                     ButtonIcon(
                       onTap: () {
                         popRoute(context);
@@ -149,6 +150,29 @@ class _SelectCategoryImageState extends State<SelectCategoryImage> {
                       icon: appStateSettings["outlinedIcons"]
                           ? Icons.emoji_emotions_outlined
                           : Icons.emoji_emotions_rounded,
+                    ),
+                    const SizedBox(width: 8),
+                    ButtonIcon(
+                      onTap: () {
+                        openBottomSheet(
+                          context,
+                          PopupFramework(
+                            title: "icon-packs-and-shapes".tr(),
+                            child: SizedBox(
+                              height: 460,
+                              child: IconPackPicker(
+                                onSelectedIcon: (iconId) {
+                                  widget.setSelectedTitle(
+                                      iconId.replaceAll("_", " ").capitalizeFirst);
+                                },
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                      icon: appStateSettings["outlinedIcons"]
+                          ? Icons.grid_view_outlined
+                          : Icons.grid_view_rounded,
                     ),
                   ],
                 )

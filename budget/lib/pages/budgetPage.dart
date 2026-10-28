@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:budget/widgets/util/showDatePicker.dart';
 import 'package:budget/database/tables.dart';
 import 'package:budget/functions.dart';
 import 'package:budget/pages/addBudgetPage.dart';
@@ -114,26 +115,44 @@ class _BudgetPageContentState extends State<_BudgetPageContent> {
 
   @override
   void initState() {
-    Future.delayed(Duration.zero, () {
-      if (isPastBudget == true) premiumPopupPastBudgets(context);
-    });
     super.initState();
   }
 
-  void changeSelectedDateRange(int delta) async {
+  void changeSelectedDateRange(int delta) {
     int index = (dateForRangeIndex) - delta;
     if (index >= 0) {
-      if (budgetHistoryDismissedPremium == false)
-        budgetHistoryDismissedPremium = await premiumPopupPastBudgets(context);
-      if (budgetHistoryDismissedPremium) {
-        setState(() {
-          dateForRangeIndex = index;
-          dateForRange = getDatePastToDetermineBudgetDate(
-            index,
-            widget.budget,
-          );
-        });
+      setState(() {
+        dateForRangeIndex = index;
+        dateForRange = getDatePastToDetermineBudgetDate(
+          index,
+          widget.budget,
+        );
+      });
+    }
+  }
+
+  void jumpToHistoricalDate() async {
+    DateTime? picked = await showCustomDatePicker(
+      context,
+      dateForRange,
+      helpText: "select-period".tr(),
+    );
+    if (picked != null) {
+      DateTime now = DateTime.now();
+      int foundIndex = 0;
+      for (int i = 0; i < 500; i++) {
+        DateTime pastDate = getDatePastToDetermineBudgetDate(i, widget.budget);
+        DateTimeRange range = getBudgetDate(widget.budget, pastDate);
+        if ((picked.isAfter(range.start) || picked.isAtSameMomentAs(range.start)) &&
+            (picked.isBefore(range.end) || picked.isAtSameMomentAs(range.end))) {
+          foundIndex = i;
+          break;
+        }
       }
+      setState(() {
+        dateForRangeIndex = foundIndex;
+        dateForRange = getDatePastToDetermineBudgetDate(foundIndex, widget.budget);
+      });
     }
   }
 
@@ -692,16 +711,46 @@ class _BudgetPageContentState extends State<_BudgetPageContent> {
                                       ),
                                       Flexible(
                                         child: AnimatedSizeSwitcher(
-                                          child: TextFont(
-                                            key: ValueKey(timeRangeString),
-                                            text: timeRangeString,
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 18,
-                                            textAlign: TextAlign.center,
-                                            textColor: Theme.of(context)
-                                                .colorScheme
-                                                .onSecondaryContainer,
-                                            maxLines: 2,
+                                          child: Tooltip(
+                                            message: "jump-to-date".tr(),
+                                            child: Tappable(
+                                              color: Colors.transparent,
+                                              borderRadius: 10,
+                                              onTap: jumpToHistoricalDate,
+                                              child: Padding(
+                                                padding: const EdgeInsetsDirectional.symmetric(horizontal: 8, vertical: 4),
+                                                child: Row(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  mainAxisAlignment: MainAxisAlignment.center,
+                                                  children: [
+                                                    Flexible(
+                                                      child: TextFont(
+                                                        key: ValueKey(timeRangeString),
+                                                        text: timeRangeString,
+                                                        fontWeight: FontWeight.bold,
+                                                        fontSize: 18,
+                                                        textAlign: TextAlign.center,
+                                                        textColor: Theme.of(context)
+                                                            .colorScheme
+                                                            .onSecondaryContainer,
+                                                        maxLines: 2,
+                                                      ),
+                                                    ),
+                                                    const SizedBox(width: 4),
+                                                    Icon(
+                                                      appStateSettings["outlinedIcons"]
+                                                          ? Icons.calendar_month_outlined
+                                                          : Icons.calendar_month_rounded,
+                                                      size: 16,
+                                                      color: Theme.of(context)
+                                                          .colorScheme
+                                                          .onSecondaryContainer
+                                                          .withOpacity(0.7),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
                                           ),
                                         ),
                                       ),

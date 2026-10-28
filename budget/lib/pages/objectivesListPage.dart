@@ -51,13 +51,25 @@ class ObjectivesListPage extends StatefulWidget {
 
 class ObjectivesListPageState extends State<ObjectivesListPage> {
   GlobalKey<PageFrameworkState> pageState = GlobalKey();
+  String _searchQuery = "";
+  bool? _selectedIncomeFilter; // null = all, true = savings, false = spending
+  final TextEditingController _searchController = TextEditingController();
 
   void scrollToTop() {
     pageState.currentState?.scrollToTop();
   }
 
   @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final allWallets = Provider.of<AllWallets>(context, listen: true);
+
     return PageFramework(
       key: pageState,
       dragDownToDismiss: true,
@@ -66,7 +78,7 @@ class ObjectivesListPageState extends State<ObjectivesListPage> {
       horizontalPaddingConstrained: enableDoubleColumn(context) == false,
       actions: [
         IconButton(
-          padding: EdgeInsetsDirectional.all(15),
+          padding: const EdgeInsetsDirectional.all(15),
           tooltip: "edit-goals".tr(),
           onPressed: () {
             pushRoute(
@@ -78,12 +90,12 @@ class ObjectivesListPageState extends State<ObjectivesListPage> {
             appStateSettings["outlinedIcons"]
                 ? Icons.edit_outlined
                 : Icons.edit_rounded,
-            color: Theme.of(context).colorScheme.onSecondaryContainer,
+            color: theme.colorScheme.onSecondaryContainer,
           ),
         ),
         if (getIsFullScreen(context))
           IconButton(
-            padding: EdgeInsetsDirectional.all(15),
+            padding: const EdgeInsetsDirectional.all(15),
             tooltip: "add-goal".tr(),
             onPressed: () {
               pushRoute(
@@ -96,14 +108,209 @@ class ObjectivesListPageState extends State<ObjectivesListPage> {
               appStateSettings["outlinedIcons"]
                   ? Icons.add_outlined
                   : Icons.add_rounded,
-              color: Theme.of(context).colorScheme.onSecondaryContainer,
+              color: theme.colorScheme.onSecondaryContainer,
             ),
           ),
       ],
       slivers: [
+        StreamBuilder<List<Objective>>(
+          stream: database.watchAllObjectives(
+            objectiveType: ObjectiveType.goal,
+            hideArchived: true,
+            showDifferenceLoans: false,
+          ),
+          builder: (context, snapshot) {
+            final objectives = snapshot.data ?? [];
+            double totalTarget = 0.0;
+            int savingsCount = 0;
+            int spendingCount = 0;
+
+            for (var o in objectives) {
+              if (o.amount > 0) {
+                totalTarget += o.amount;
+              }
+              if (o.income) {
+                savingsCount++;
+              } else {
+                spendingCount++;
+              }
+            }
+
+            return SliverList(
+              delegate: SliverChildListDelegate([
+                if (objectives.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsetsDirectional.fromSTEB(14, 8, 14, 12),
+                    child: Container(
+                      padding: const EdgeInsetsDirectional.all(16),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surfaceVariant.withOpacity(0.45),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: theme.colorScheme.outlineVariant.withOpacity(0.3),
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                TextFont(
+                                  text: "total-target".tr().toUpperCase(),
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  textColor: theme.colorScheme.onSurfaceVariant.withOpacity(0.8),
+                                ),
+                                const SizedBox(height: 4),
+                                TextFont(
+                                  text: convertToMoney(allWallets, totalTarget),
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ],
+                            ),
+                          ),
+                          Container(
+                            height: 36,
+                            width: 1,
+                            color: theme.colorScheme.outlineVariant.withOpacity(0.4),
+                          ),
+                          const SizedBox(width: 16),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              TextFont(
+                                text: "goals".tr().toUpperCase(),
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                textColor: theme.colorScheme.onSurfaceVariant.withOpacity(0.8),
+                              ),
+                              const SizedBox(height: 4),
+                              TextFont(
+                                text: "${objectives.length} (" +
+                                    "savings".tr() +
+                                    ": $savingsCount, " +
+                                    "spending".tr() +
+                                    ": $spendingCount)",
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                // Search Bar
+                Padding(
+                  padding: const EdgeInsetsDirectional.fromSTEB(14, 0, 14, 8),
+                  child: Container(
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surfaceVariant.withOpacity(0.35),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: TextField(
+                      controller: _searchController,
+                      onChanged: (val) {
+                        setState(() {
+                          _searchQuery = val.trim();
+                        });
+                      },
+                      decoration: InputDecoration(
+                        hintText: "search-goals".tr(),
+                        hintStyle: TextStyle(
+                          fontSize: 14,
+                          color: theme.colorScheme.onSurfaceVariant.withOpacity(0.6),
+                        ),
+                        prefixIcon: Icon(
+                          appStateSettings["outlinedIcons"]
+                              ? Icons.search_outlined
+                              : Icons.search_rounded,
+                          size: 20,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                        suffixIcon: _searchQuery.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(Icons.clear, size: 18),
+                                onPressed: () {
+                                  _searchController.clear();
+                                  setState(() {
+                                    _searchQuery = "";
+                                  });
+                                },
+                              )
+                            : null,
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsetsDirectional.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+                // Type Filter Chips: All, Savings, Spending
+                Padding(
+                  padding: const EdgeInsetsDirectional.fromSTEB(14, 0, 14, 12),
+                  child: Row(
+                    children: [
+                      ChoiceChip(
+                        label: Text("all".tr()),
+                        selected: _selectedIncomeFilter == null,
+                        onSelected: (selected) {
+                          if (selected) {
+                            setState(() {
+                              _selectedIncomeFilter = null;
+                            });
+                          }
+                        },
+                        selectedColor: theme.colorScheme.primaryContainer,
+                      ),
+                      const SizedBox(width: 8),
+                      ChoiceChip(
+                        label: Text("savings-goals".tr()),
+                        selected: _selectedIncomeFilter == true,
+                        onSelected: (selected) {
+                          if (selected) {
+                            setState(() {
+                              _selectedIncomeFilter = true;
+                            });
+                          }
+                        },
+                        selectedColor: theme.colorScheme.primaryContainer,
+                      ),
+                      const SizedBox(width: 8),
+                      ChoiceChip(
+                        label: Text("spending-goals".tr()),
+                        selected: _selectedIncomeFilter == false,
+                        onSelected: (selected) {
+                          if (selected) {
+                            setState(() {
+                              _selectedIncomeFilter = false;
+                            });
+                          }
+                        },
+                        selectedColor: theme.colorScheme.primaryContainer,
+                      ),
+                    ],
+                  ),
+                ),
+              ]),
+            );
+          },
+        ),
         ObjectiveList(
-            showExamplesIfEmpty: true, objectiveType: ObjectiveType.goal),
-        SliverToBoxAdapter(
+          showExamplesIfEmpty: _searchQuery.isEmpty && _selectedIncomeFilter == null,
+          objectiveType: ObjectiveType.goal,
+          searchFor: _searchQuery.isEmpty ? null : _searchQuery,
+          isIncome: _selectedIncomeFilter,
+        ),
+        const SliverToBoxAdapter(
           child: SizedBox(height: 50),
         ),
       ],

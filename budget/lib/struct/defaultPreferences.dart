@@ -198,6 +198,22 @@ Future<Map<String, dynamic>> getDefaultPreferences() async {
     "showMethodAdded": false,
     "showBackupLimit": false,
     "outlinedIcons": false,
+    "iconShape": "rounded", // "rounded", "circle", "squircle", "sharp"
+    "favoriteThemeColors": [
+      "0xFF1B447A",
+      "0xFF2E7D32",
+      "0xFF1565C0",
+      "0xFFE65100",
+      "0xFF6A1B9A",
+      "0xFF00838F",
+      "0xFFC2185B",
+      "0xFF37474F",
+    ],
+    "recentThemeColors": [
+      "0xFF1B447A",
+    ],
+    "favoriteIcons": <String>[],
+    "recentIcons": <String>[],
     "premiumPopupAddTransactionCount": -5,
     "premiumPopupAddTransactionLastShown": DateTime.now().toString(),
     "premiumPopupFreeSeen": false,
